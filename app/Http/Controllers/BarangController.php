@@ -467,4 +467,44 @@ class BarangController extends Controller
             
         return view('fasilitas.barang.riwayat-karyawan', compact('gedung', 'ruangan', 'barang', 'riwayat'));
     }
+
+    /**
+     * Generate QR Code untuk barang yang belum memilikinya
+     * AJAX endpoint untuk generate QR code secara manual
+     * 
+     * @param string $gedung_id
+     * @param string $ruangan_id
+     * @param string $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function generateQrCode($gedung_id, $ruangan_id, $id)
+    {
+        try {
+            $gedung_id = Crypt::decrypt($gedung_id);
+            $ruangan_id = Crypt::decrypt($ruangan_id);
+            $id = Crypt::decrypt($id);
+
+            $barang = Barang::where('id', $id)
+                ->where('ruangan_id', $ruangan_id)
+                ->firstOrFail();
+
+            // Generate atau regenerate QR code
+            QrCodeBarangService::generateQrCode($barang);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'QR Code berhasil digenerate!',
+                'data' => [
+                    'qr_code_hash' => $barang->qr_code_hash,
+                    'qr_code_url' => route('barang.public-detail', ['hash' => $barang->qr_code_hash]),
+                    'qr_download_url' => route('barang.download-qr', ['hash' => $barang->qr_code_hash])
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal generate QR Code: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

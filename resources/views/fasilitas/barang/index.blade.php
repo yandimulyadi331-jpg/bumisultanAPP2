@@ -89,9 +89,14 @@
                                                                 <i class="ti ti-eye text-info" style="font-size: 18px;"></i>
                                                             </a>
                                                         @else
-                                                            <span class="text-muted" title="Barang belum memiliki QR Code">
-                                                                <i class="ti ti-eye-off" style="font-size: 18px; opacity: 0.5;"></i>
-                                                            </span>
+                                                            <button type="button" 
+                                                               class="btn btn-link btn-sm p-0 me-2 generate-qr-btn"
+                                                               data-barang-id="{{ Crypt::encrypt($d->id) }}"
+                                                               data-gedung-id="{{ Crypt::encrypt($gedung->id) }}"
+                                                               data-ruangan-id="{{ Crypt::encrypt($ruangan->id) }}"
+                                                               title="Generate QR Code untuk barang ini">
+                                                                <i class="ti ti-qrcode text-warning" style="font-size: 18px;"></i>
+                                                            </button>
                                                         @endif
                                                     </div>
                                                     <div>
@@ -227,6 +232,71 @@
                 $("#qrDownloadBtn").attr('href', qrDownloadUrl);
                 $('#mdlPreviewQr').modal('show');
             });
+
+            // Generate QR Code untuk barang yang belum memilikinya
+            $(".generate-qr-btn").click(function(e) {
+                e.preventDefault();
+                var btn = $(this);
+                var barangId = btn.data('barang-id');
+                var gedungId = btn.data('gedung-id');
+                var ruanganId = btn.data('ruangan-id');
+                var $icon = btn.find('i');
+
+                // Disable button dan ubah icon
+                btn.prop('disabled', true);
+                $icon.removeClass('ti-qrcode').addClass('ti-loader').css('animation', 'spin 1s linear infinite');
+
+                $.ajax({
+                    url: '/gedung/' + gedungId + '/ruangan/' + ruanganId + '/barang/' + barangId + '/generate-qr',
+                    type: 'POST',
+                    data: {
+                        '_token': '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Show success message
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil!',
+                                text: response.message,
+                                showConfirmButton: false,
+                                timer: 2000
+                            }).then(function() {
+                                // Reload halaman setelah generate QR code
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal!',
+                                text: response.message
+                            });
+                            // Restore button
+                            btn.prop('disabled', false);
+                            $icon.removeClass('ti-loader').addClass('ti-qrcode').css('animation', '');
+                        }
+                    },
+                    error: function(xhr) {
+                        var message = 'Terjadi kesalahan saat generate QR Code';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            message = xhr.responseJSON.message;
+                        }
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: message
+                        });
+                        // Restore button
+                        btn.prop('disabled', false);
+                        $icon.removeClass('ti-loader').addClass('ti-qrcode').css('animation', '');
+                    }
+                });
+            });
         });
+
+        // CSS untuk animasi loading
+        $('<style>')
+            .text('@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }')
+            .appendTo('head');
     </script>
 @endpush

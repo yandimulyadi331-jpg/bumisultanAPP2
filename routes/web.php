@@ -722,6 +722,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/gedung/{gedung_id}/ruangan/{ruangan_id}/barang/{id}/transfer', 'transfer')->name('barang.transfer');
             Route::post('/gedung/{gedung_id}/ruangan/{ruangan_id}/barang/{id}/proses-transfer', 'prosesTransfer')->name('barang.prosesTransfer');
             Route::get('/gedung/{gedung_id}/ruangan/{ruangan_id}/barang/{id}/riwayat', 'riwayatTransfer')->name('barang.riwayat');
+            Route::post('/gedung/{gedung_id}/ruangan/{ruangan_id}/barang/{id}/generate-qr', 'generateQrCode')->name('barang.generateQr');
         });
 
         // Kendaraan Routes
