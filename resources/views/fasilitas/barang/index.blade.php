@@ -81,6 +81,20 @@
                                             <td>
                                                 <div class="d-flex">
                                                     <div>
+                                                        @if($d->qr_code_hash)
+                                                            <a href="{{ route('barang.public-detail', ['hash' => $d->qr_code_hash]) }}" 
+                                                               target="_blank"
+                                                               class="me-2" 
+                                                               title="Lihat Detail Publik">
+                                                                <i class="ti ti-eye text-info" style="font-size: 18px;"></i>
+                                                            </a>
+                                                        @else
+                                                            <span class="text-muted" title="Barang belum memiliki QR Code">
+                                                                <i class="ti ti-eye-off" style="font-size: 18px; opacity: 0.5;"></i>
+                                                            </span>
+                                                        @endif
+                                                    </div>
+                                                    <div>
                                                         <a href="{{ route('barang.transfer', [
                                                             'gedung_id' => Crypt::encrypt($gedung->id),
                                                             'ruangan_id' => Crypt::encrypt($ruangan->id),
@@ -151,6 +165,30 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Preview QR Code -->
+<div class="modal fade" id="mdlPreviewQr" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">QR Code - <span id="qrCodeTitle"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img src="" id="qrCodePreview" class="img-fluid" style="max-height: 400px;">
+                <p class="mt-3 text-muted small">
+                    Scan QR Code ini atau akses link di bawah untuk membuka detail barang
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                <a href="#" id="qrDownloadBtn" class="btn btn-primary" download>
+                    <i class="ti ti-download me-1"></i> Download QR Code
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 @push('myscript')
     <script>
@@ -175,6 +213,19 @@
                 $("#fotoPreview").attr('src', fotoSrc);
                 $("#fotoTitle").text(title);
                 $('#mdlPreviewFoto').modal('show');
+            });
+
+            // Preview QR Code
+            $(".qr-preview").click(function(e) {
+                e.preventDefault();
+                var qrSrc = $(this).data('qr');
+                var qrCode = $(this).data('code');
+                var qrDownloadUrl = "{{ route('barang.download-qr', ['hash' => 'HASH_PLACEHOLDER']) }}".replace('HASH_PLACEHOLDER', qrCode);
+                
+                $("#qrCodePreview").attr('src', qrSrc);
+                $("#qrCodeTitle").text(qrCode);
+                $("#qrDownloadBtn").attr('href', qrDownloadUrl);
+                $('#mdlPreviewQr').modal('show');
             });
         });
     </script>

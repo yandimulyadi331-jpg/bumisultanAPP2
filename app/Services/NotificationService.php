@@ -17,6 +17,7 @@ class NotificationService
     public static function presensiNotification($presensi, $type = 'masuk')
     {
         $karyawan = Karyawan::where('nik', $presensi->nik)->first();
+        if (!$karyawan) { return null; }
         
         if ($type === 'masuk') {
             $title = 'Presensi Masuk';
@@ -125,6 +126,7 @@ class NotificationService
     public static function pinjamanNotification($pinjaman, $type = 'pengajuan')
     {
         $karyawan = Karyawan::where('nik', $pinjaman->nik)->first();
+        if (!$karyawan) { return null; }
         
         $titles = [
             'pengajuan' => 'Pengajuan Pinjaman Baru',
@@ -286,6 +288,7 @@ class NotificationService
     public static function izinNotification($izin, $type = 'pengajuan', $model_type = 'izin_absen')
     {
         $karyawan = Karyawan::where('nik', $izin->nik)->first();
+        if (!$karyawan) { return null; }
         
         $titles = [
             'pengajuan' => 'Pengajuan Izin',
@@ -332,6 +335,7 @@ class NotificationService
     public static function lemburNotification($lembur, $type = 'pengajuan')
     {
         $karyawan = Karyawan::where('nik', $lembur->nik)->first();
+        if (!$karyawan) { return null; }
         
         $titles = [
             'pengajuan' => 'Pengajuan Lembur',
@@ -373,6 +377,7 @@ class NotificationService
     public static function aktivitasKaryawanNotification($aktivitas, $type = 'baru')
     {
         $karyawan = Karyawan::where('nik', $aktivitas->nik)->first();
+        if (!$karyawan) { return null; }
         
         $title = 'Aktivitas Karyawan Baru';
         $message = "{$karyawan->nama_karyawan} menambahkan aktivitas: {$aktivitas->deskripsi}";

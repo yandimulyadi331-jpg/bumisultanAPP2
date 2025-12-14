@@ -1001,4 +1001,102 @@ class PinjamanController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Force delete pinjaman yang tidak terikat ke karyawan (Orphan)
+     * Fitur ini memungkinkan admin menghapus pinjaman dari karyawan yang sudah dihapus
+     */
+    public function forceDelete(Request $request, $id)
+    {
+        $pinjaman = Pinjaman::find($id);
+        
+        if (!$pinjaman) {
+            return redirect()->back()->with('error', 'Pinjaman tidak ditemukan');
+        }
+
+        // Verify it's an orphan (karyawan tidak ada) atau status bisa dihapus
+        $isOrphan = ($pinjaman->kategori_peminjam == 'crew' && !$pinjaman->karyawan);
+        $isDeleteableStatus = in_array($pinjaman->status, ['lunas', 'ditolak', 'dibatalkan']);
+
+        if (!$isOrphan && !$isDeleteableStatus) {
+            return redirect()->back()->with('error', 'Pinjaman tidak dapat dihapus! Status harus LUNAS, DITOLAK, atau DIBATALKAN. Atau pinjaman adalah orphan (karyawan tidak ada).');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Hapus dokumen
+            if ($pinjaman->dokumen_ktp) {
+                Storage::disk('public')->delete($pinjaman->dokumen_ktp);
+            }
+            if ($pinjaman->dokumen_slip_gaji) {
+                Storage::disk('public')->delete($pinjaman->dokumen_slip_gaji);
+            }
+            if ($pinjaman->dokumen_pendukung_lain) {
+                Storage::disk('public')->delete($pinjaman->dokumen_pendukung_lain);
+            }
+
+            // Hapus cicilan dan history terlebih dahulu
+            PinjamanCicilan::where('pinjaman_id', $pinjaman->id)->forceDelete();
+            PinjamanHistory::where('pinjaman_id', $pinjaman->id)->forceDelete();
+
+            // Hapus pinjaman
+            $pinjaman->forceDelete();
+
+            DB::commit();
+
+            $msg = $isOrphan 
+                ? 'Pinjaman orphan berhasil dihapus!' 
+                : 'Pinjaman berhasil dihapus!';
+
+            return redirect()->route('pinjaman.index')->with('success', $msg);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Gagal menghapus pinjaman: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Update keterangan pinjaman orphan (yang karyawannya sudah dihapus)
+     * Fitur ini memungkinkan admin mengubah data pinjaman orphan
+     */
+    public function updateOrphan(Request $request, $id)
+    {
+        $pinjaman = Pinjaman::find($id);
+        
+        if (!$pinjaman) {
+            return redirect()->back()->with('error', 'Pinjaman tidak ditemukan');
+        }
+
+        // Verify it's an orphan
+        $isOrphan = ($pinjaman->kategori_peminjam == 'crew' && !$pinjaman->karyawan);
+        
+        if (!$isOrphan) {
+            return redirect()->back()->with('error', 'Pinjaman ini bukan orphan. Gunakan edit normal untuk mengubahnya.');
+        }
+
+        $validated = $request->validate([
+            'nama_peminjam_lengkap' => 'required|string',
+            'keterangan' => 'nullable|string',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $pinjaman->update([
+                'nama_peminjam_lengkap' => $validated['nama_peminjam_lengkap'],
+                'keterangan' => $validated['keterangan'] ?? $pinjaman->keterangan,
+            ]);
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Data pinjaman orphan berhasil diperbarui!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Gagal memperbarui pinjaman: ' . $e->getMessage());
+        }
+    }
 }
+

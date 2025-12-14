@@ -6,6 +6,7 @@ use App\Models\Barang;
 use App\Models\Ruangan;
 use App\Models\Gedung;
 use App\Models\TransferBarang;
+use App\Services\QrCodeBarangService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Redirect;
@@ -87,8 +88,13 @@ class BarangController extends Controller
                 $data['foto'] = $filename;
             }
 
-            Barang::create($data);
-            return Redirect::back()->with(messageSuccess('Data Barang Berhasil Disimpan dengan Kode: ' . $kodeBarang));
+            // Create barang record
+            $barang = Barang::create($data);
+            
+            // Generate QR Code otomatis setelah barang dibuat
+            QrCodeBarangService::generateQrCode($barang);
+            
+            return Redirect::back()->with(messageSuccess('Data Barang Berhasil Disimpan dengan Kode: ' . $kodeBarang . '. QR Code telah digenerate otomatis.'));
         } catch (\Exception $e) {
             return Redirect::back()->with(messageError($e->getMessage()));
         }
@@ -159,7 +165,13 @@ class BarangController extends Controller
             }
 
             $barang->update($data);
-            return Redirect::back()->with(messageSuccess('Data Barang Berhasil Di Update'));
+            
+            // Regenerate QR Code saat update data barang
+            if ($barang->exists) {
+                QrCodeBarangService::regenerateQrCode($barang);
+            }
+            
+            return Redirect::back()->with(messageSuccess('Data Barang Berhasil Di Update. QR Code telah di-regenerate.'));
         } catch (\Exception $e) {
             return Redirect::back()->with(messageError($e->getMessage()));
         }
@@ -180,6 +192,9 @@ class BarangController extends Controller
             if ($barang->foto && file_exists(public_path('storage/barang/' . $barang->foto))) {
                 unlink(public_path('storage/barang/' . $barang->foto));
             }
+            
+            // Delete QR Code if exists
+            QrCodeBarangService::deleteQrCode($barang);
             
             $barang->delete();
             return Redirect::back()->with(messageSuccess('Data Barang Berhasil Dihapus'));

@@ -73,7 +73,7 @@ class HadiahMajlisTaklimController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'nama_hadiah' => 'required|string|max:100',
-            'jenis_hadiah' => 'required|in:sarung,peci,gamis,mukena,tasbih,sajadah,al_quran,buku,lainnya',
+            'jenis_hadiah' => 'required|string|max:100',
             'ukuran' => 'nullable|string|max:20',
             'warna' => 'nullable|string|max:50',
             'deskripsi' => 'nullable|string',
@@ -169,7 +169,7 @@ class HadiahMajlisTaklimController extends Controller
 
         $validator = Validator::make($request->all(), [
             'nama_hadiah' => 'required|string|max:100',
-            'jenis_hadiah' => 'required|in:sarung,peci,gamis,mukena,tasbih,sajadah,al_quran,buku,lainnya',
+            'jenis_hadiah' => 'required|string|max:100',
             'ukuran' => 'nullable|string|max:20',
             'warna' => 'nullable|string|max:50',
             'deskripsi' => 'nullable|string',
@@ -394,9 +394,6 @@ class HadiahMajlisTaklimController extends Controller
             $totalDistribusi = 0;
             $hadiahDistribusi = [];
 
-            // Generate base nomor distribusi sekali untuk batch ini
-            $baseNomorDistribusi = DistribusiHadiah::generateNomorDistribusi();
-            
             // Tentukan jamaah_id dan keterangan penerima
             $jamaahId = null;
             $keteranganPenerima = '';
@@ -482,9 +479,9 @@ class HadiahMajlisTaklimController extends Controller
                     $ukuranInfo = null;
                 }
 
-                // Create distribusi record - tambahkan suffix item number untuk unique nomor
-                $itemNumber = str_pad($index + 1, 2, '0', STR_PAD_LEFT);
-                $nomorDistribusi = $baseNomorDistribusi . '-' . $itemNumber;
+                // Create distribusi record - gunakan unique identifier
+                // Setiap distribusi mendapat nomor unik
+                $nomorDistribusi = DistribusiHadiah::generateNomorDistribusi();
                 
                 $dataDistribusi = [
                     'nomor_distribusi' => $nomorDistribusi,

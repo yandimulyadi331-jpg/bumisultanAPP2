@@ -94,6 +94,25 @@
 </div>
 @endif
 
+<!-- Alert: Karyawan tidak ditemukan -->
+@if($pinjaman->kategori_peminjam == 'crew' && !$pinjaman->karyawan)
+<div class="alert alert-warning alert-dismissible fade show" role="alert">
+    <h5 class="alert-heading">
+        <i class="bi bi-exclamation-triangle-fill"></i> Data Karyawan Tidak Ditemukan
+    </h5>
+    <p class="mb-2">
+        Karyawan dengan NIK <strong>{{ $pinjaman->karyawan_id }}</strong> tidak tersedia di database.
+        Kemungkinan karyawan telah dihapus atau data belum disinkronkan.
+    </p>
+    <hr>
+    <p class="mb-0">
+        <strong>Status Pinjaman Tetap Berlaku:</strong>
+        Anda masih dapat melakukan pembayaran, penundaan cicilan, pelunasan, atau menghapus pinjaman ini.
+    </p>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+@endif
+
 @php
     $cicilanTerlambat = $pinjaman->cicilan->where('status', 'terlambat');
     $totalDenda = $cicilanTerlambat->sum('denda');
@@ -682,6 +701,27 @@
                             <i class="bi bi-pencil"></i> Edit Pinjaman
                         </a>
                     @endif
+
+                    <!-- Tombol Khusus untuk Orphan Pinjaman -->
+                    @if($pinjaman->kategori_peminjam == 'crew' && !$pinjaman->karyawan)
+                    <div class="mt-3 pt-3 border-top">
+                        <p class="text-muted small mb-2"><i class="bi bi-info-circle"></i> <strong>Pinjaman Orphan:</strong></p>
+                        
+                        <!-- Tombol Edit Keterangan -->
+                        <button class="btn btn-sm btn-outline-primary w-100 mb-2" data-bs-toggle="modal" data-bs-target="#modalUpdateOrphan">
+                            <i class="bi bi-pencil-square"></i> Ubah Keterangan
+                        </button>
+                        
+                        <!-- Tombol Hapus Paksa -->
+                        <form action="{{ route('pinjaman.orphan.force-delete', $pinjaman->id) }}" method="POST" style="display:inline;">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-sm btn-outline-danger w-100" onclick="return confirm('Yakin ingin menghapus pinjaman ini secara permanen?')">
+                                <i class="bi bi-trash"></i> Hapus Pinjaman
+                            </button>
+                        </form>
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -1000,6 +1040,54 @@
         </form>
     </div>
 </div>
+
+<!-- Modal Update Orphan Pinjaman -->
+@if($pinjaman->kategori_peminjam == 'crew' && !$pinjaman->karyawan)
+<div class="modal fade" id="modalUpdateOrphan" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="{{ route('pinjaman.orphan.update', $pinjaman->id) }}" method="POST">
+            @csrf
+            @method('PUT')
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil-square"></i> Update Data Pinjaman Orphan
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> 
+                        <strong>Pinjaman Orphan</strong><br>
+                        Karyawan dengan NIK <strong>{{ $pinjaman->karyawan_id }}</strong> tidak tersedia.
+                        Anda dapat mengubah nama dan keterangan pinjaman ini.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label required">Nama Peminjam Lengkap</label>
+                        <input type="text" name="nama_peminjam_lengkap" class="form-control" 
+                            value="{{ $pinjaman->nama_peminjam_lengkap }}" required>
+                        <small class="text-muted">Nama yang akan ditampilkan di laporan pinjaman</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Keterangan Tambahan</label>
+                        <textarea name="keterangan" class="form-control" rows="3" 
+                            placeholder="Contoh: Karyawan sudah resign, pinjaman masih dalam proses cicilan...">{{ $pinjaman->keterangan }}</textarea>
+                        <small class="text-muted">Informasi tambahan untuk dokumentasi</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Simpan Perubahan
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
 
 @endsection
 

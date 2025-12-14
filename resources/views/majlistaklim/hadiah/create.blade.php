@@ -37,23 +37,14 @@
                             <label for="jenis_hadiah" class="form-label">Jenis Hadiah <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="ti ti-category"></i></span>
-                                <select class="form-select @error('jenis_hadiah') is-invalid @enderror" id="jenis_hadiah" name="jenis_hadiah" required>
-                                    <option value="">Pilih Jenis Hadiah</option>
-                                    <option value="sarung" {{ old('jenis_hadiah') == 'sarung' ? 'selected' : '' }}>Sarung</option>
-                                    <option value="peci" {{ old('jenis_hadiah') == 'peci' ? 'selected' : '' }}>Peci</option>
-                                    <option value="gamis" {{ old('jenis_hadiah') == 'gamis' ? 'selected' : '' }}>Gamis</option>
-                                    <option value="mukena" {{ old('jenis_hadiah') == 'mukena' ? 'selected' : '' }}>Mukena</option>
-                                    <option value="tasbih" {{ old('jenis_hadiah') == 'tasbih' ? 'selected' : '' }}>Tasbih</option>
-                                    <option value="sajadah" {{ old('jenis_hadiah') == 'sajadah' ? 'selected' : '' }}>Sajadah</option>
-                                    <option value="al_quran" {{ old('jenis_hadiah') == 'al_quran' ? 'selected' : '' }}>Al-Qur'an</option>
-                                    <option value="buku" {{ old('jenis_hadiah') == 'buku' ? 'selected' : '' }}>Buku</option>
-                                    <option value="lainnya" {{ old('jenis_hadiah') == 'lainnya' ? 'selected' : '' }}>Lainnya</option>
-                                </select>
+                                <input type="text" class="form-control @error('jenis_hadiah') is-invalid @enderror" 
+                                    id="jenis_hadiah" name="jenis_hadiah" value="{{ old('jenis_hadiah') }}" 
+                                    placeholder="Contoh: Sarung, Peci, Gamis, dll" required>
                             </div>
                             @error('jenis_hadiah')
                                 <div class="text-danger small mt-1">{{ $message }}</div>
                             @enderror
-                            <small class="text-muted">Kode hadiah akan di-generate otomatis</small>
+                            <small class="text-muted">Ketik nama jenis hadiah secara manual</small>
                         </div>
 
                         <div class="col-md-4 mb-3">

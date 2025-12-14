@@ -23,7 +23,11 @@ class Barang extends Model
         'tanggal_perolehan',
         'harga_perolehan',
         'keterangan',
-        'foto'
+        'foto',
+        'qr_code_data',
+        'qr_code_hash',
+        'qr_code_path',
+        'status_barang'
     ];
 
     protected $casts = [

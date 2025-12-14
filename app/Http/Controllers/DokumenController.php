@@ -225,7 +225,7 @@ class DokumenController extends Controller
             'baris' => 'nullable|string|max:20',
             'jenis_dokumen' => 'required|in:file,link',
             'file_dokumen' => 'nullable|file|max:10240',
-            'link_dokumen' => 'required_if:jenis_dokumen,link|url',
+            'link_dokumen' => 'required_if:jenis_dokumen,link|nullable|url',
             'access_level' => 'required|in:public,view_only,restricted',
             'tanggal_dokumen' => 'nullable|date',
             'tanggal_berlaku' => 'nullable|date',

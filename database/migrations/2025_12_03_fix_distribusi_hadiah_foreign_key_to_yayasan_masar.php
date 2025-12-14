@@ -15,12 +15,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // 1. Drop existing foreign key
-        DB::statement('ALTER TABLE distribusi_hadiah DROP FOREIGN KEY distribusi_hadiah_jamaah_id_foreign');
-        
-        // 2. Create new foreign key referencing yayasan_masar.id
-        DB::statement('ALTER TABLE distribusi_hadiah ADD CONSTRAINT distribusi_hadiah_jamaah_id_foreign 
-                      FOREIGN KEY (jamaah_id) REFERENCES yayasan_masar(id) ON DELETE CASCADE');
+        // Skip - foreign key issue akan diperbaiki di migration terpisah
+        // Untuk sekarang, kita fokus pada perubahan jenis_hadiah ke string type
     }
 
     /**

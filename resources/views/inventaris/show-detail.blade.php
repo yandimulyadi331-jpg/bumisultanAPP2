@@ -151,6 +151,7 @@
 <!-- Modals -->
 <x-modal-form id="modal" size="modal-xl" show="loadmodal" title="" />
 <x-modal-form id="modalUnit" size="modal-lg" show="loadmodalUnit" title="" />
+<x-modal-form id="modalPeminjamanUnit" size="modal-lg" show="loadmodalPeminjamanUnit" title="" />
 
 @endsection
 
@@ -162,7 +163,7 @@
             e.preventDefault();
             let id = $(this).data('id');
             $('#modal').modal('show');
-            $('.modal-title').text('Edit Inventaris');
+            $('#modal .modal-title').text('Edit Inventaris');
             $('#loadmodal').load('/inventaris/' + id + '/edit');
         });
 
@@ -171,7 +172,7 @@
             e.preventDefault();
             let inventarisId = '{{ $inventaris->id }}';
             $('#modalUnit').modal('show');
-            $('.modal-title').text('Tambah Unit Baru');
+            $('#modalUnit .modal-title').text('Tambah Unit Baru');
             $('#loadmodalUnit').load('/inventaris/' + inventarisId + '/units/create');
         });
 
@@ -181,7 +182,7 @@
             let inventarisId = '{{ $inventaris->id }}';
             let unitId = $(this).data('id');
             $('#modalUnit').modal('show');
-            $('.modal-title').text('Edit Unit');
+            $('#modalUnit .modal-title').text('Edit Unit');
             $('#loadmodalUnit').load('/inventaris/' + inventarisId + '/units/' + unitId + '/edit');
         });
 
@@ -244,6 +245,7 @@
             
             // Load modal form
             $('#modalPeminjamanUnit').modal('show');
+            $('#modalPeminjamanUnit .modal-title').text('Form Peminjaman: ' + kodeUnit);
             $('#loadmodalPeminjamanUnit').load(url, function(response, status, xhr) {
                 if (status == "error") {
                     console.error('Load error:', xhr.status, xhr.statusText);
@@ -276,7 +278,7 @@
             
             // Show form pengembalian di modal
             $('#modalUnit').modal('show');
-            $('.modal-title').text('Form Pengembalian Unit: ' + kodeUnit);
+            $('#modalUnit .modal-title').text('Form Pengembalian Unit: ' + kodeUnit);
             $('#loadmodalUnit').html(`
                 <form id="formPengembalianUnit">
                     <input type="hidden" name="_token" value="{{ csrf_token() }}">

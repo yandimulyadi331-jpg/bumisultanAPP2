@@ -123,6 +123,13 @@ Route::controller(FacerecognitionpresensiController::class)->group(function () {
     Route::get('/facerecognition/getallwajah', 'getAllWajah')->name('facerecognition.getallwajah');
 });
 
+// Barang QR Code Public Routes (No Login Required)
+Route::controller(\App\Http\Controllers\BarangPublicController::class)->group(function () {
+    Route::get('/barang/qr/{hash}', 'publicDetail')->name('barang.public-detail');
+    Route::get('/barang/qr/{hash}/download', 'downloadQrCode')->name('barang.download-qr');
+    Route::get('/api/barang/qr/{hash}', 'getBarangDetails')->name('barang.api-details');
+});
+
 // Route::get('/dashboard', function () {
 //     return view('dashboard');
 // })->middleware(['auth', 'verified'])->name('dashboard');
@@ -774,60 +781,87 @@ Route::middleware('auth')->group(function () {
             Route::get('/pengunjung/export-pdf', 'exportPDF')->name('pengunjung.exportPDF');
         });
 
-        // ============ MANAJEMEN INVENTARIS ROUTES ============
-        
-        // Dashboard Manajemen Inventaris (Menu Utama)
-        Route::get('manajemen-inventaris', [InventarisController::class, 'dashboard'])->name('manajemen-inventaris.dashboard');
-        
-        // Master Data Inventaris - Custom routes BEFORE resource
-        Route::prefix('inventaris')->name('inventaris.')->group(function () {
-            Route::get('/history', [InventarisController::class, 'history'])->name('history');
-            Route::get('/history/{id}', [InventarisController::class, 'historyDetail'])->name('history-detail');
-            Route::post('/import-barang', [InventarisController::class, 'importFromBarang'])->name('import-barang');
-            Route::get('/barangs-for-import', [InventarisController::class, 'getBarangsForImport'])->name('barangs-import');
-            Route::get('/export-pdf', [InventarisController::class, 'exportPdf'])->name('export-pdf');
-            Route::get('/export-aktivitas-pdf', [InventarisController::class, 'exportAktivitasPdf'])->name('export-aktivitas-pdf');
-            
-            // Detail view with tabs (NEW)
-            Route::get('/{id}/detail', [InventarisController::class, 'showDetail'])->name('detail');
-        });
-        
-        Route::resource('inventaris', InventarisController::class);
-        
-        // Detail Units Management Routes (NEW)
-        Route::prefix('inventaris/{inventaris}/units')->name('inventaris.units.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\InventarisDetailUnitController::class, 'index'])->name('index');
-            Route::get('/create', [\App\Http\Controllers\InventarisDetailUnitController::class, 'create'])->name('create');
-            Route::post('/', [\App\Http\Controllers\InventarisDetailUnitController::class, 'store'])->name('store');
-            Route::get('/{unit}/edit', [\App\Http\Controllers\InventarisDetailUnitController::class, 'edit'])->name('edit');
-            Route::put('/{unit}', [\App\Http\Controllers\InventarisDetailUnitController::class, 'update'])->name('update');
-            Route::delete('/{unit}', [\App\Http\Controllers\InventarisDetailUnitController::class, 'destroy'])->name('destroy');
-            Route::get('/{unit}/history', [\App\Http\Controllers\InventarisDetailUnitController::class, 'showHistory'])->name('history');
-            Route::get('/{unit}/history/pdf', [\App\Http\Controllers\InventarisDetailUnitController::class, 'historyPdf'])->name('history.pdf');
-            Route::get('/{unit}/peminjaman', [\App\Http\Controllers\InventarisDetailUnitController::class, 'showPeminjamanForm'])->name('peminjaman');
-            Route::post('/{unit}/kembalikan', [\App\Http\Controllers\InventarisDetailUnitController::class, 'kembalikanUnit'])->name('kembalikan');
-            Route::get('/tersedia', [\App\Http\Controllers\InventarisDetailUnitController::class, 'getUnitsTersedia'])->name('tersedia');
-            Route::post('/bulk-update-status', [\App\Http\Controllers\InventarisDetailUnitController::class, 'bulkUpdateStatus'])->name('bulk-update-status');
-        });
-        
-        // Peminjaman Inventaris
-        Route::resource('peminjaman-inventaris', PeminjamanInventarisController::class);
-        Route::prefix('peminjaman-inventaris')->name('peminjaman-inventaris.')->group(function () {
-            Route::post('/{peminjamanInventaris}/setujui', [PeminjamanInventarisController::class, 'setujui'])->name('setujui');
-            Route::post('/{peminjamanInventaris}/tolak', [PeminjamanInventarisController::class, 'tolak'])->name('tolak');
-            Route::get('/check-ketersediaan/{inventarisId}', [PeminjamanInventarisController::class, 'checkKetersediaan'])->name('check-ketersediaan');
-            Route::get('/export-pdf', [PeminjamanInventarisController::class, 'exportPdf'])->name('export-pdf');
-        });
-        
-        // Pengembalian Inventaris
-        Route::prefix('pengembalian-inventaris')->name('pengembalian-inventaris.')->group(function () {
-            Route::get('/', [PengembalianInventarisController::class, 'index'])->name('index');
-            Route::get('/create', [PengembalianInventarisController::class, 'create'])->name('create'); // Support query string
-            Route::post('/', [PengembalianInventarisController::class, 'store'])->name('store');
-            Route::get('/select/peminjaman-aktif', [PengembalianInventarisController::class, 'getPeminjamanAktif'])->name('peminjaman-aktif');
-            Route::get('/export-pdf', [PengembalianInventarisController::class, 'exportPdf'])->name('export-pdf');
-            Route::get('/{pengembalianInventaris}', [PengembalianInventarisController::class, 'show'])->name('show');
-        });
+// ============ MANAJEMEN INVENTARIS ROUTES ============
+
+// Dashboard Manajemen Inventaris (Menu Utama)
+Route::get('manajemen-inventaris', [InventarisController::class, 'dashboard'])
+    ->name('manajemen-inventaris.dashboard');
+
+
+// =====================================================================
+// 1. ROUTE DETAIL UNIT INVENTARIS (HARUS DITARUH SEBELUM RESOURCE!)
+// =====================================================================
+Route::prefix('inventaris/{inventaris}/units')->name('inventaris.units.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\InventarisDetailUnitController::class, 'index'])->name('index');
+    Route::get('/create', [\App\Http\Controllers\InventarisDetailUnitController::class, 'create'])->name('create');
+    Route::post('/', [\App\Http\Controllers\InventarisDetailUnitController::class, 'store'])->name('store');
+    Route::get('/{unit}/edit', [\App\Http\Controllers\InventarisDetailUnitController::class, 'edit'])->name('edit');
+    Route::put('/{unit}', [\App\Http\Controllers\InventarisDetailUnitController::class, 'update'])->name('update');
+    Route::delete('/{unit}', [\App\Http\Controllers\InventarisDetailUnitController::class, 'destroy'])->name('destroy');
+
+    // Riwayat unit
+    Route::get('/{unit}/history', [\App\Http\Controllers\InventarisDetailUnitController::class, 'showHistory'])->name('history');
+    Route::get('/{unit}/history/pdf', [\App\Http\Controllers\InventarisDetailUnitController::class, 'historyPdf'])->name('history.pdf');
+
+    // FORM PEMINJAMAN (ikon panah biru)
+    Route::get('/{unit}/peminjaman', [\App\Http\Controllers\InventarisDetailUnitController::class, 'showPeminjamanForm'])
+        ->name('peminjaman');
+
+    // Kembalikan unit
+    Route::post('/{unit}/kembalikan', [\App\Http\Controllers\InventarisDetailUnitController::class, 'kembalikanUnit'])
+        ->name('kembalikan');
+
+    // Lainnya
+    Route::get('/tersedia', [\App\Http\Controllers\InventarisDetailUnitController::class, 'getUnitsTersedia'])->name('tersedia');
+    Route::post('/bulk-update-status', [\App\Http\Controllers\InventarisDetailUnitController::class, 'bulkUpdateStatus'])
+        ->name('bulk-update-status');
+});
+
+
+// =====================================================================
+// 2. ROUTE INVENTARIS (MASTER DATA INVENTARIS)
+// =====================================================================
+Route::prefix('inventaris')->name('inventaris.')->group(function () {
+    Route::get('/history', [InventarisController::class, 'history'])->name('history');
+    Route::get('/history/{id}', [InventarisController::class, 'historyDetail'])->name('history-detail');
+    Route::post('/import-barang', [InventarisController::class, 'importFromBarang'])->name('import-barang');
+    Route::get('/barangs-for-import', [InventarisController::class, 'getBarangsForImport'])->name('barangs-import');
+    Route::get('/export-pdf', [InventarisController::class, 'exportPdf'])->name('export-pdf');
+    Route::get('/export-aktivitas-pdf', [InventarisController::class, 'exportAktivitasPdf'])->name('export-aktivitas-pdf');
+
+    // Detail view with tabs
+    Route::get('/{id}/detail', [InventarisController::class, 'showDetail'])->name('detail');
+});
+
+// RESOURCE (DIPAKAI TERAKHIR)
+Route::resource('inventaris', InventarisController::class);
+
+
+// =====================================================================
+// 3. PEMINJAMAN INVENTARIS
+// =====================================================================
+Route::resource('peminjaman-inventaris', PeminjamanInventarisController::class);
+
+Route::prefix('peminjaman-inventaris')->name('peminjaman-inventaris.')->group(function () {
+    Route::post('/{peminjamanInventaris}/setujui', [PeminjamanInventarisController::class, 'setujui'])->name('setujui');
+    Route::post('/{peminjamanInventaris}/tolak', [PeminjamanInventarisController::class, 'tolak'])->name('tolak');
+    Route::get('/check-ketersediaan/{inventarisId}', [PeminjamanInventarisController::class, 'checkKetersediaan'])->name('check-ketersediaan');
+    Route::get('/export-pdf', [PeminjamanInventarisController::class, 'exportPdf'])->name('export-pdf');
+});
+
+
+// =====================================================================
+// 4. PENGEMBALIAN INVENTARIS
+// =====================================================================
+Route::prefix('pengembalian-inventaris')->name('pengembalian-inventaris.')->group(function () {
+    Route::get('/', [PengembalianInventarisController::class, 'index'])->name('index');
+    Route::get('/create', [PengembalianInventarisController::class, 'create'])->name('create');
+    Route::post('/', [PengembalianInventarisController::class, 'store'])->name('store');
+    Route::get('/select/peminjaman-aktif', [PengembalianInventarisController::class, 'getPeminjamanAktif'])->name('peminjaman-aktif');
+    Route::get('/export-pdf', [PengembalianInventarisController::class, 'exportPdf'])->name('export-pdf');
+    Route::get('/{pengembalianInventaris}', [PengembalianInventarisController::class, 'show'])->name('show');
+});
+
         
         // ============ PERALATAN BS (Bumi Sultan) ============
         
@@ -1648,6 +1682,10 @@ Route::middleware('role:super admin')->prefix('pinjaman')->name('pinjaman.')->co
     
     // Kirim Email Notifikasi Manual
     Route::post('/{pinjaman}/kirim-email', 'kirimEmailManual')->name('kirim-email');
+    
+    // Orphan Pinjaman Management (Pinjaman dari karyawan yang sudah dihapus)
+    Route::delete('/orphan/{id}/force-delete', 'forceDelete')->name('orphan.force-delete');
+    Route::put('/orphan/{id}/update', 'updateOrphan')->name('orphan.update');
     
     // Laporan
     Route::get('/laporan/index', 'laporan')->name('laporan');

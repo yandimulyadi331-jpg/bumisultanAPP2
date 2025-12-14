@@ -36,20 +36,13 @@ class DistribusiHadiah extends Model
 
     /**
      * Generate nomor distribusi otomatis
-     * Format: DH-TAHUN-BULAN-URUT
+     * Format: DH-{timestamp}-{random}
+     * Ini lebih aman dan menghindari duplicate constraint violation
      */
     public static function generateNomorDistribusi()
     {
-        $tahun = date('Y');
-        $bulan = date('m');
-        $urut = str_pad(
-            self::whereYear('created_at', $tahun)
-                ->whereMonth('created_at', $bulan)
-                ->count() + 1, 
-            4, '0', STR_PAD_LEFT
-        );
-        
-        return "DH-{$tahun}-{$bulan}-{$urut}";
+        // Gunakan timestamp + random untuk ensure unique
+        return 'DH-' . uniqid() . '-' . rand(1000, 9999);
     }
 
     /**

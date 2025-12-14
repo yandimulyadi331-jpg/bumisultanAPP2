@@ -393,6 +393,8 @@
 
 // Function untuk konfirmasi hapus dengan SweetAlert2
 function confirmDelete(pinjamanId, nomor, nama, jumlah, status) {
+    console.log('confirmDelete called with ID:', pinjamanId);
+    
     Swal.fire({
         title: '⚠️ PERINGATAN!',
         html: `
@@ -437,8 +439,17 @@ function confirmDelete(pinjamanId, nomor, nama, jumlah, status) {
                 }
             });
             
-            // Submit form
-            document.getElementById('delete-form-' + pinjamanId).submit();
+            // Submit form dengan error handling
+            const formElement = document.getElementById('delete-form-' + pinjamanId);
+            console.log('Form element:', formElement);
+            
+            if (formElement) {
+                console.log('Submitting form for ID:', pinjamanId);
+                formElement.submit();
+            } else {
+                console.error('Form not found with ID: delete-form-' + pinjamanId);
+                Swal.fire('Error', 'Form tidak ditemukan. Silakan refresh halaman.', 'error');
+            }
         }
     });
 }
