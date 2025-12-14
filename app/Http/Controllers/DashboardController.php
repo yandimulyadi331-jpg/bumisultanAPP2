@@ -29,8 +29,14 @@ class DashboardController extends Controller
         $agent = new Agent();
         $user = User::where('id', auth()->user()->id)->first();
         $hari_ini = date("Y-m-d");
-        if ($user->hasRole('karyawan')) {
+        if ($user && $user->hasRole('karyawan')) {
             $userkaryawan = Userkaryawan::where('id_user', auth()->user()->id)->first();
+            
+            // Check if userkaryawan exists
+            if (!$userkaryawan) {
+                return redirect()->back()->with('error', 'Data karyawan tidak ditemukan');
+            }
+            
             $data['karyawan'] = Karyawan::where('nik', $userkaryawan->nik)
                 ->join('jabatan', 'karyawan.kode_jabatan', '=', 'jabatan.kode_jabatan')
                 ->join('departemen', 'karyawan.kode_dept', '=', 'departemen.kode_dept')
